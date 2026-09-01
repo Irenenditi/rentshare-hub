@@ -165,9 +165,9 @@
 @layer base {
   body {
     background-image: radial-gradient(
-        1200px 600px at 85% -10%,
-        color-mix(in oklab, var(--gold) 22%, transparent),
-        transparent 60%
+        1100px 520px at 80% -12%,
+        color-mix(in oklab, var(--primary) 8%, transparent),
+        transparent 62%
       ),
       radial-gradient(900px 500px at -10% 110%, var(--cream), transparent 55%);
     background-attachment: fixed;
