@@ -157,3 +157,93 @@
     color: var(--color-foreground);
   }
 }
+
+@layer base {
+  body {
+    background-image: radial-gradient(
+        1200px 600px at 85% -10%,
+        color-mix(in oklab, var(--gold) 22%, transparent),
+        transparent 60%
+      ),
+      radial-gradient(900px 500px at -10% 110%, var(--cream), transparent 55%);
+    background-attachment: fixed;
+    font-family: var(--font-sans);
+  }
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+  }
+}
+
+@keyframes aradhi-rise {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes aradhi-fill {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+@keyframes aradhi-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.4;
+    transform: scale(1.5);
+  }
+}
+
+@keyframes aradhi-shine {
+  from {
+    background-position: -140% 0;
+  }
+  to {
+    background-position: 240% 0;
+  }
+}
+
+@utility rise {
+  animation: aradhi-rise 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@utility bar-fill {
+  transform-origin: left;
+  animation: aradhi-fill 1.2s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@utility dot-pulse {
+  animation: aradhi-pulse 1.4s ease-in-out infinite;
+}
+
+@utility shine {
+  background-image: linear-gradient(
+    100deg,
+    transparent 20%,
+    color-mix(in oklab, var(--ivory) 70%, transparent) 42%,
+    transparent 64%
+  );
+  background-size: 200% 100%;
+  animation: aradhi-shine 3.4s ease-in-out infinite;
+}
+
+@utility lift {
+  transition:
+    transform 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lift);
+  }
+}
