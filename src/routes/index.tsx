@@ -64,7 +64,7 @@ const ledger = [
 const fmt = (n: number) => n.toLocaleString("en-KE");
 
 function Index() {
-  const [selected, setSelected] = useState(properties[0]);
+  const [selected, setSelected] = useState(properties[0]!);
   const [phone, setPhone] = useState("0712 345 678");
   const [amount, setAmount] = useState(5000);
   const [status, setStatus] = useState<"idle" | "pending" | "done">("idle");
