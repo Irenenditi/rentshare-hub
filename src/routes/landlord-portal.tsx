@@ -274,17 +274,17 @@ function LandlordPortal() {
               <div className="mt-6 grid gap-4 sm:grid-cols-3">
                 <UploadZone
                   label="Digital Title Copy (PDF)"
-                  done={files.title}
+                  done={!!files["title"]}
                   onClick={() => handleFileToggle("title")}
                 />
                 <UploadZone
                   label="KRA PIN & ID Document"
-                  done={files.kra}
+                  done={!!files["kra"]}
                   onClick={() => handleFileToggle("kra")}
                 />
                 <UploadZone
                   label="Certified Valuation Report (ISK Approved)"
-                  done={files.valuation}
+                  done={!!files["valuation"]}
                   onClick={() => handleFileToggle("valuation")}
                 />
               </div>
