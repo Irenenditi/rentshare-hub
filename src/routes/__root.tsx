@@ -78,11 +78,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Kilimani Heights Hub — Fractional property investing" },
+      { title: "Aradhi — Fractional property investing" },
       {
         name: "description",
         content:
-          "Micro-fractionalized rental yields powered by M-Pesa. Buy KHY property fractions from KES 500.",
+          "Aradhi makes fractional real estate investing simple. Buy property shares from KES 500 and earn rental yield.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
