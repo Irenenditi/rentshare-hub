@@ -84,26 +84,35 @@ function Index() {
               Aradhi
             </span>
           </div>
-          <button
-            onClick={() => setConnected(true)}
-            className={`inline-flex shrink-0 items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition-all duration-300 ${
-              connected
-                ? "bg-accent text-accent-foreground ring-1 ring-primary/25"
-                : "bg-foreground text-background hover:opacity-90"
-            }`}
-          >
-            {connected ? (
-              <>
-                <span className="size-2 rounded-full bg-primary dot-pulse" />
-                {MOCK_ADDRESS}
-              </>
-            ) : (
-              <>
-                <Wallet className="size-4" />
-                Connect Wallet
-              </>
-            )}
-          </button>
+          <div className="flex shrink-0 items-center gap-2">
+            <Link
+              to="/landlord-portal"
+              className="hidden items-center gap-1.5 rounded-full px-3 py-2 text-sm font-semibold text-foreground ring-1 ring-input transition-colors hover:bg-secondary sm:inline-flex"
+            >
+              <ShieldCheck className="size-4" />
+              Landlord Portal
+            </Link>
+            <button
+              onClick={() => setConnected(true)}
+              className={`inline-flex shrink-0 items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition-all duration-300 ${
+                connected
+                  ? "bg-accent text-accent-foreground ring-1 ring-primary/25"
+                  : "bg-foreground text-background hover:opacity-90"
+              }`}
+            >
+              {connected ? (
+                <>
+                  <span className="size-2 rounded-full bg-primary dot-pulse" />
+                  {MOCK_ADDRESS}
+                </>
+              ) : (
+                <>
+                  <Wallet className="size-4" />
+                  Connect Wallet
+                </>
+              )}
+            </button>
+          </div>
         </div>
       </header>
 
