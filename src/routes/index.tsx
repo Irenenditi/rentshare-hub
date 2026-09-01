@@ -178,7 +178,7 @@ function Index() {
               Landlord Portal
             </Link>
             <button
-              onClick={() => setConnected(true)}
+              onClick={() => void connectWallet()}
               className={`inline-flex shrink-0 items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition-all duration-300 ${
                 connected
                   ? "bg-accent text-accent-foreground ring-1 ring-primary/25"
@@ -188,7 +188,8 @@ function Index() {
               {connected ? (
                 <>
                   <span className="size-2 rounded-full bg-primary dot-pulse" />
-                  {MOCK_ADDRESS}
+                  {shortAddress}
+
                 </>
               ) : (
                 <>
