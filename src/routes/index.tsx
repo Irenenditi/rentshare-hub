@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+
 import {
   ArrowUpRight,
   Building2,
@@ -36,41 +37,125 @@ export const Route = createFileRoute("/")({
 });
 
 const SHARE_PRICE = 500;
-const MOCK_ADDRESS = "0x9522...Afe5";
+
+// Local bridge backend. When testing the M-Pesa STK push on a real handset,
+// swap this for your ngrok tunnel, e.g. "https://<id>.ngrok-free.app".
+const BACKEND_URL = "http://localhost:5000";
 
 const fmt = (n: number) => n.toLocaleString("en-KE");
 
 function Index() {
-  const [connected, setConnected] = useState(false);
+  const [userAddress, setUserAddress] = useState("");
   const [phone, setPhone] = useState("2547");
   const [amount, setAmount] = useState(2500);
   const [loading, setLoading] = useState(false);
   const [shares, setShares] = useState(0);
   const [rentDue, setRentDue] = useState(0);
 
+  const connected = Boolean(userAddress);
+  const shortAddress = userAddress
+    ? `${userAddress.slice(0, 6)}...${userAddress.slice(-4)}`
+    : "";
   const estShares = useMemo(() => Math.floor((amount || 0) / SHARE_PRICE), [amount]);
 
-  function buy() {
-    if (!connected || loading || estShares < 1) return;
+  async function connectWallet() {
+    try {
+      const injected = (window as unknown as {
+        ethereum?: { request: (a: { method: string }) => Promise<string[]> };
+      }).ethereum;
+      if (!injected) {
+        setUserAddress("0x9522000000000000000000000000000000000Afe5");
+        toast("Demo wallet connected", {
+          description: "No browser wallet detected — using a simulated address.",
+        });
+        return;
+      }
+      const accounts = await injected.request({ method: "eth_requestAccounts" });
+      if (accounts?.[0]) setUserAddress(accounts[0]);
+    } catch (error) {
+      console.error("Wallet connection failed:", error);
+      toast.error("Could not connect your wallet.");
+    }
+  }
+
+  // Web3 direct read: refresh on-chain balances whenever the address changes.
+  useEffect(() => {
+    if (!userAddress) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const { readOnChainBalances } = await import("@/lib/aradhi-chain");
+        const balances = await readOnChainBalances(userAddress);
+        if (!balances || cancelled) return;
+        setShares(balances.shares);
+        setRentDue(balances.pendingRent);
+      } catch (error) {
+        console.error("On-chain balance read failed:", error);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [userAddress]);
+
+  async function buy(e: React.FormEvent) {
+    e.preventDefault();
+    if (loading) return;
+    if (!connected) {
+      toast.error("Please connect your wallet first.");
+      return;
+    }
+    if (estShares < 1) {
+      toast.error(`Minimum investment is KES ${fmt(SHARE_PRICE)}.`);
+      return;
+    }
+
     setLoading(true);
-    toast("STK Push sent to your phone", { description: `KES ${fmt(amount)} · ${phone}` });
-    setTimeout(() => {
-      setLoading(false);
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/invest`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          phoneNumber: phone,
+          amount: Number(amount),
+          walletAddress: userAddress,
+        }),
+      });
+
+      const payload = (await res.json().catch(() => ({}))) as {
+        message?: string;
+        error?: string;
+      };
+
+      if (!res.ok) {
+        console.error("Invest request failed:", res.status, payload);
+        toast.error(payload.error ?? `Payment failed (HTTP ${res.status})`);
+        return;
+      }
+
+      toast.success(payload.message ?? "Aradhi Payment Initiated! Check handset for PIN prompt", {
+        description: `KES ${fmt(amount)} · ${phone}`,
+      });
       setShares((s) => s + estShares);
       setRentDue((r) => r + estShares * 0.0412);
-      toast.success(`${fmt(estShares)} KHY tokens added to your holdings`, {
-        description: "Your fractional ownership is now active.",
+    } catch (error) {
+      console.error("Backend unreachable:", error);
+      toast.error("Cannot reach the Aradhi server on port 5000.", {
+        description: "Make sure the local bridge backend is running, then try again.",
       });
-    }, 2200);
+    } finally {
+      setLoading(false);
+    }
   }
 
   function withdraw() {
     if (rentDue <= 0) return;
-    toast.success(`$${rentDue.toFixed(4)} USDC sent to ${MOCK_ADDRESS}`, {
+    toast.success(`$${rentDue.toFixed(4)} USDC sent to ${shortAddress}`, {
       description: "Your rental earnings are on the way.",
     });
     setRentDue(0);
   }
+
 
   return (
     <div className="min-h-screen">
@@ -93,7 +178,7 @@ function Index() {
               Landlord Portal
             </Link>
             <button
-              onClick={() => setConnected(true)}
+              onClick={() => void connectWallet()}
               className={`inline-flex shrink-0 items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition-all duration-300 ${
                 connected
                   ? "bg-accent text-accent-foreground ring-1 ring-primary/25"
@@ -103,7 +188,8 @@ function Index() {
               {connected ? (
                 <>
                   <span className="size-2 rounded-full bg-primary dot-pulse" />
-                  {MOCK_ADDRESS}
+                  {shortAddress}
+
                 </>
               ) : (
                 <>
@@ -193,53 +279,56 @@ function Index() {
               send an STK push to complete payment.
             </p>
 
-            <label className="mt-5 block text-xs font-semibold text-muted-foreground">
-              M-Pesa Phone Number
-            </label>
-            <input
-              inputMode="tel"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              placeholder="2547XX XXX XXX"
-              className="mt-1.5 w-full rounded-xl border border-input bg-background px-4 py-3 text-sm outline-none transition-shadow focus:ring-4 focus:ring-[var(--ring)]"
-            />
+            <form onSubmit={buy}>
+              <label className="mt-5 block text-xs font-semibold text-muted-foreground">
+                M-Pesa Phone Number
+              </label>
+              <input
+                inputMode="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="2547XX XXX XXX"
+                className="mt-1.5 w-full rounded-xl border border-input bg-background px-4 py-3 text-sm outline-none transition-shadow focus:ring-4 focus:ring-[var(--ring)]"
+              />
 
-            <label className="mt-4 block text-xs font-semibold text-muted-foreground">
-              Amount to Invest (KES)
-            </label>
-            <input
-              type="number"
-              step={500}
-              min={500}
-              value={amount}
-              onChange={(e) => setAmount(Number(e.target.value) || 0)}
-              className="mt-1.5 w-full rounded-xl border border-input bg-background px-4 py-3 text-sm outline-none transition-shadow focus:ring-4 focus:ring-[var(--ring)]"
-            />
+              <label className="mt-4 block text-xs font-semibold text-muted-foreground">
+                Amount to Invest (KES)
+              </label>
+              <input
+                type="number"
+                step={500}
+                min={500}
+                value={amount}
+                onChange={(e) => setAmount(Number(e.target.value) || 0)}
+                className="mt-1.5 w-full rounded-xl border border-input bg-background px-4 py-3 text-sm outline-none transition-shadow focus:ring-4 focus:ring-[var(--ring)]"
+              />
 
-            <div className="mt-4 rounded-xl bg-secondary px-4 py-3">
-              <p className="text-sm text-muted-foreground">
-                You will receive{" "}
-                <span className="font-bold text-primary">{fmt(estShares)} KHY tokens</span>
-              </p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                1 KHY = KES {fmt(SHARE_PRICE)}
-              </p>
-            </div>
+              <div className="mt-4 rounded-xl bg-secondary px-4 py-3">
+                <p className="text-sm text-muted-foreground">
+                  You will receive{" "}
+                  <span className="font-bold text-primary">{fmt(estShares)} KHY tokens</span>
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  1 KHY = KES {fmt(SHARE_PRICE)}
+                </p>
+              </div>
 
-            <button
-              onClick={buy}
-              disabled={!connected || loading}
-              className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3.5 text-sm font-bold text-primary-foreground transition-transform hover:scale-[1.015] disabled:cursor-not-allowed disabled:opacity-55 disabled:hover:scale-100"
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="size-4 animate-spin" />
-                  Sending STK Prompt...
-                </>
-              ) : (
-                "Process M-Pesa Purchase"
-              )}
-            </button>
+              <button
+                type="submit"
+                disabled={!connected || loading}
+                className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3.5 text-sm font-bold text-primary-foreground transition-transform hover:scale-[1.015] disabled:cursor-not-allowed disabled:opacity-55 disabled:hover:scale-100"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="size-4 animate-spin" />
+                    Sending STK Prompt...
+                  </>
+                ) : (
+                  "Process M-Pesa Purchase"
+                )}
+              </button>
+            </form>
+
 
             {!connected && (
               <p className="rise mt-3 flex items-start gap-2 rounded-xl bg-secondary px-3 py-2.5 text-xs font-medium text-muted-foreground">
