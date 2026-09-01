@@ -1,330 +1,281 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { ArrowUpRight, Check, Coins, Home, Smartphone, Wallet } from "lucide-react";
+import {
+  ArrowUpRight,
+  Building2,
+  CheckCircle2,
+  Coins,
+  Loader2,
+  ShieldCheck,
+  Smartphone,
+  TriangleAlert,
+  Wallet,
+} from "lucide-react";
+import { toast } from "sonner";
 
-import prop1 from "@/assets/prop-1.jpg";
-import prop2 from "@/assets/prop-2.jpg";
-import prop3 from "@/assets/prop-3.jpg";
+import propImage from "@/assets/prop-1.jpg";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Aradhi — Own a slice of rent" },
+      { title: "Kilimani Heights Tokenization Hub" },
       {
         name: "description",
         content:
-          "Buy fractional shares of Kenyan rental property from KES 500 with M-Pesa, and claim your rent yield anytime.",
+          "Buy fractional shares of a Kilimani apartment block with M-Pesa and earn USDC rental yield.",
       },
-      { property: "og:title", content: "Aradhi — Own a slice of rent" },
+      { property: "og:title", content: "Kilimani Heights Tokenization Hub" },
       {
         property: "og:description",
-        content: "Fractional rental property investing in Kenya, powered by M-Pesa.",
+        content: "Micro-fractionalized rental yields powered by M-Pesa.",
       },
     ],
   }),
   component: Index,
 });
 
-const properties = [
-  {
-    id: "kileleshwa",
-    name: "Kileleshwa Court",
-    location: "Nairobi · Residential",
-    image: prop1,
-    yieldPa: 19.2,
-    pricePerShare: 500,
-    funded: 84,
-  },
-  {
-    id: "langata",
-    name: "Lang'ata Studio Loft",
-    location: "Karen · Furnished",
-    image: prop2,
-    yieldPa: 16.8,
-    pricePerShare: 320,
-    funded: 65,
-  },
-  {
-    id: "nakuru",
-    name: "Nakuru Shopfront 7",
-    location: "Nakuru · Commercial",
-    image: prop3,
-    yieldPa: 14.5,
-    pricePerShare: 850,
-    funded: 89,
-  },
-];
-
-const ledger = [
-  { label: "Rent payout · Kileleshwa", when: "14 Feb", amount: "+ KES 4,820", positive: true },
-  { label: "Investment · Lang'ata", when: "02 Feb", amount: "− KES 16,000", positive: false },
-  { label: "Rent payout · Nakuru", when: "14 Jan", amount: "+ KES 3,210", positive: true },
-];
+const SHARE_PRICE = 500;
+const MOCK_ADDRESS = "0x9522...Afe5";
 
 const fmt = (n: number) => n.toLocaleString("en-KE");
 
 function Index() {
-  const [selected, setSelected] = useState(properties[0]!);
-  const [phone, setPhone] = useState("0712 345 678");
-  const [amount, setAmount] = useState(5000);
-  const [status, setStatus] = useState<"idle" | "pending" | "done">("idle");
-  const [claimed, setClaimed] = useState(false);
+  const [connected, setConnected] = useState(false);
+  const [phone, setPhone] = useState("2547");
+  const [amount, setAmount] = useState(2500);
+  const [loading, setLoading] = useState(false);
+  const [shares, setShares] = useState(0);
+  const [rentDue, setRentDue] = useState(0);
 
-  const shares = useMemo(
-    () => Math.floor(amount / selected.pricePerShare),
-    [amount, selected],
-  );
+  const estShares = useMemo(() => Math.floor((amount || 0) / SHARE_PRICE), [amount]);
 
-  function pay() {
-    setStatus("pending");
-    setTimeout(() => setStatus("done"), 2200);
+  function buy() {
+    if (!connected || loading || estShares < 1) return;
+    setLoading(true);
+    toast("STK Push sent to phone!", { description: `KES ${fmt(amount)} · ${phone}` });
+    setTimeout(() => {
+      setLoading(false);
+      setShares((s) => s + estShares);
+      setRentDue((r) => r + estShares * 0.0412);
+      toast.success(`${estShares} KHY tokens minted`, {
+        description: "Fractions added to your holdings.",
+      });
+    }, 2200);
+  }
+
+  function withdraw() {
+    if (rentDue <= 0) return;
+    toast.success(`$${rentDue.toFixed(4)} USDC sent to ${MOCK_ADDRESS}`);
+    setRentDue(0);
   }
 
   return (
-    <div className="min-h-screen text-foreground">
-      <header className="sticky top-0 z-20 border-b border-border bg-ivory/80 backdrop-blur-md">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-4">
-          <div className="flex items-center gap-2.5">
-            <span className="grid size-9 place-items-center rounded-xl bg-primary text-primary-foreground font-display text-lg">
-              a
+    <div className="min-h-screen">
+      <header className="sticky top-0 z-20 border-b border-border bg-background/80 backdrop-blur-xl">
+        <div className="mx-auto grid max-w-7xl grid-cols-[minmax(0,1fr)_auto] items-center gap-4 px-4 py-3.5 sm:px-6">
+          <div className="flex min-w-0 items-center gap-2.5">
+            <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-primary text-primary-foreground">
+              <Building2 className="size-4.5" />
             </span>
-            <span className="font-display text-xl tracking-tight">aradhi</span>
+            <span className="truncate font-display text-[15px] font-bold tracking-tight">
+              Kilimani Heights Hub
+            </span>
           </div>
-          <nav className="hidden items-center gap-7 text-sm text-muted-foreground md:flex">
-            <span className="font-medium text-foreground">Portfolio</span>
-            <span>Properties</span>
-            <span>Ledger</span>
-          </nav>
-          <div className="flex items-center gap-2 rounded-full bg-cream px-3 py-1.5 text-xs font-medium">
-            <Wallet className="size-3.5 text-primary" />
-            0x7f…A2c9
-          </div>
+          <button
+            onClick={() => setConnected(true)}
+            className={`inline-flex shrink-0 items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition-all duration-300 ${
+              connected
+                ? "bg-accent text-accent-foreground ring-1 ring-primary/25"
+                : "bg-foreground text-background hover:opacity-90"
+            }`}
+          >
+            {connected ? (
+              <>
+                <span className="size-2 rounded-full bg-primary dot-pulse" />
+                {MOCK_ADDRESS}
+              </>
+            ) : (
+              <>
+                <Wallet className="size-4" />
+                Connect Wallet
+              </>
+            )}
+          </button>
         </div>
       </header>
 
-      <main className="mx-auto max-w-6xl space-y-10 px-5 py-10">
-        <section className="rise">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-            Micro-rent yield hub
-          </p>
-          <h1 className="mt-3 max-w-2xl text-4xl leading-[1.05] tracking-tight md:text-6xl">
-            Own a slice of rent, <em className="text-primary not-italic">paid monthly</em>.
+      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-12">
+        <section className="rise max-w-2xl">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-accent px-3 py-1 text-xs font-semibold text-accent-foreground">
+            <ShieldCheck className="size-3.5" />
+            Base L2 · Audited escrow
+          </span>
+          <h1 className="mt-4 font-display text-3xl font-bold leading-[1.1] tracking-tight sm:text-4xl md:text-5xl">
+            Kilimani Heights Tokenization Hub
           </h1>
-          <p className="mt-4 max-w-xl text-[15px] leading-relaxed text-muted-foreground">
-            Buy fractional shares of Kenyan rental property from KES 500 with M-Pesa. Rent
-            lands in your wallet — claim it anytime.
+          <p className="mt-3 text-base text-muted-foreground">
+            Micro-fractionalized rental yields powered by M-Pesa.
           </p>
         </section>
 
-        <section className="grid gap-4 md:grid-cols-3">
-          {[
-            { icon: Coins, label: "Total invested", value: "KES 1,087,500", note: "≈ $8,340" },
-            { icon: Home, label: "Shares held", value: "23,480 KHY", note: "3 properties" },
-          ].map((s, i) => (
-            <article
-              key={s.label}
-              className="rise lift rounded-3xl border border-border bg-card p-6 shadow-[var(--shadow-soft)]"
-              style={{ animationDelay: `${80 * i}ms` }}
-            >
-              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-                <s.icon className="size-4 text-primary" />
-                {s.label}
-              </div>
-              <p className="mt-3 font-display text-3xl tracking-tight">{s.value}</p>
-              <p className="mt-1 text-sm text-muted-foreground">{s.note}</p>
-            </article>
-          ))}
-
+        <section className="mt-8 grid items-start gap-5 lg:grid-cols-3">
+          {/* Column 1 — property */}
           <article
-            className="rise lift relative overflow-hidden rounded-3xl border border-border bg-[var(--gradient-gold)] p-6 shadow-[var(--shadow-soft)]"
-            style={{ animationDelay: "160ms" }}
+            className="rise lift overflow-hidden rounded-3xl border border-border bg-card shadow-[var(--shadow-soft)]"
+            style={{ animationDelay: "60ms" }}
           >
-            <div className="shine pointer-events-none absolute inset-0" />
             <div className="relative">
-              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-accent-foreground/80">
-                Unclaimed yield
+              <img
+                src={propImage}
+                alt="Block C Residential Complex in Kilimani, Nairobi"
+                width={1024}
+                height={768}
+                loading="lazy"
+                className="h-48 w-full object-cover"
+              />
+              <span className="absolute left-4 top-4 rounded-full bg-background/90 px-3 py-1.5 text-xs font-bold text-primary shadow-[var(--shadow-soft)] backdrop-blur">
+                12.4% Target APY
+              </span>
+            </div>
+            <div className="p-6">
+              <h2 className="font-display text-xl font-bold tracking-tight">
+                Block C Residential Complex
+              </h2>
+              <p className="mt-1 text-sm text-muted-foreground">Kilimani, Nairobi</p>
+              <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
+                Premium multi-family apartment building generating consistent underlying cash
+                flow. 1 Share fraction value is hard pegged to KES 500.
               </p>
-              <p className="mt-3 font-display text-3xl tracking-tight text-accent-foreground">
-                {claimed ? "KES 0" : "KES 14,290"}
-              </p>
-              <button
-                onClick={() => setClaimed(true)}
-                disabled={claimed}
-                className="mt-4 inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-transform hover:scale-[1.03] disabled:opacity-60"
-              >
-                {claimed ? <Check className="size-4" /> : <ArrowUpRight className="size-4" />}
-                {claimed ? "Claimed to wallet" : "Claim yield"}
-              </button>
+
+              <div className="mt-6 flex items-center justify-between text-sm font-semibold">
+                <span>84% Funded</span>
+                <span className="text-muted-foreground">8,400 / 10,000</span>
+              </div>
+              <div className="mt-2 h-2.5 overflow-hidden rounded-full bg-secondary">
+                <div
+                  className="bar-fill h-full rounded-full bg-[var(--gradient-gold)]"
+                  style={{ width: "84%", animationDelay: "320ms" }}
+                />
+              </div>
+              <p className="mt-3 text-xs text-muted-foreground">Total Asset Pool: 10,000 KHY</p>
             </div>
           </article>
-        </section>
 
-        <section className="grid gap-6 lg:grid-cols-[1.6fr_1fr] lg:items-start">
-          <div className="space-y-4">
-            <h2 className="text-2xl tracking-tight">Properties</h2>
-            {properties.map((p, i) => {
-              const active = p.id === selected.id;
-              return (
-                <button
-                  key={p.id}
-                  onClick={() => setSelected(p)}
-                  className={`rise lift flex w-full gap-4 rounded-3xl border p-4 text-left shadow-[var(--shadow-soft)] ${
-                    active ? "border-primary/45 bg-cream" : "border-border bg-card"
-                  }`}
-                  style={{ animationDelay: `${120 + i * 90}ms` }}
-                >
-                  <img
-                    src={p.image}
-                    alt={`${p.name} in ${p.location}`}
-                    loading="lazy"
-                    width={1024}
-                    height={768}
-                    className="hidden h-28 w-36 shrink-0 rounded-2xl object-cover sm:block"
-                  />
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <h3 className="text-[17px] font-semibold">{p.name}</h3>
-                        <p className="text-xs text-muted-foreground">{p.location}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-display text-2xl leading-none text-primary">
-                          {p.yieldPa}%
-                        </p>
-                        <p className="text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
-                          yield p.a.
-                        </p>
-                      </div>
-                    </div>
-                    <p className="mt-3 text-sm text-muted-foreground">
-                      Share price{" "}
-                      <span className="font-semibold text-foreground">
-                        KES {fmt(p.pricePerShare)}
-                      </span>
-                    </p>
-                    <div className="mt-2 flex items-center justify-between text-[11px] text-muted-foreground">
-                      <span>Funded</span>
-                      <span>{p.funded}%</span>
-                    </div>
-                    <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-secondary">
-                      <div
-                        className="bar-fill h-full rounded-full bg-primary"
-                        style={{ width: `${p.funded}%`, animationDelay: `${300 + i * 90}ms` }}
-                      />
-                    </div>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
+          {/* Column 2 — M-Pesa */}
+          <article
+            className="rise lift rounded-3xl border border-border bg-card p-6 shadow-[var(--shadow-soft)]"
+            style={{ animationDelay: "140ms" }}
+          >
+            <div className="flex items-center gap-2">
+              <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-accent text-accent-foreground">
+                <Smartphone className="size-4" />
+              </span>
+              <h2 className="font-display text-lg font-bold tracking-tight">Invest via M-Pesa</h2>
+            </div>
 
-          <aside className="rise space-y-4 lg:sticky lg:top-24" style={{ animationDelay: "220ms" }}>
-            <div className="rounded-3xl border border-border bg-card p-6 shadow-[var(--shadow-soft)]">
-              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-                <Smartphone className="size-4 text-primary" />
-                Invest via M-Pesa
-              </div>
-              <h3 className="mt-2 text-xl tracking-tight">{selected.name}</h3>
+            <label className="mt-6 block text-xs font-semibold text-muted-foreground">
+              Phone Number
+            </label>
+            <input
+              inputMode="tel"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              className="mt-1.5 w-full rounded-xl border border-input bg-background px-4 py-3 text-sm outline-none transition-shadow focus:ring-4 focus:ring-[var(--ring)]"
+            />
 
-              <label className="mt-5 block text-xs font-medium text-muted-foreground">
-                Safaricom number
-              </label>
-              <input
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                className="mt-1.5 w-full rounded-2xl border border-input bg-ivory px-4 py-3 text-sm outline-none transition-shadow focus:ring-4 focus:ring-[var(--ring)]"
-              />
+            <label className="mt-4 block text-xs font-semibold text-muted-foreground">
+              Amount to Allocate (KES)
+            </label>
+            <input
+              type="number"
+              step={500}
+              min={500}
+              value={amount}
+              onChange={(e) => setAmount(Number(e.target.value) || 0)}
+              className="mt-1.5 w-full rounded-xl border border-input bg-background px-4 py-3 text-sm outline-none transition-shadow focus:ring-4 focus:ring-[var(--ring)]"
+            />
 
-              <label className="mt-4 block text-xs font-medium text-muted-foreground">
-                Amount (KES)
-              </label>
-              <input
-                type="number"
-                value={amount}
-                onChange={(e) => setAmount(Number(e.target.value) || 0)}
-                className="mt-1.5 w-full rounded-2xl border border-input bg-ivory px-4 py-3 text-sm outline-none transition-shadow focus:ring-4 focus:ring-[var(--ring)]"
-              />
-              <div className="mt-2 flex gap-2">
-                {[1000, 5000, 10000].map((v) => (
-                  <button
-                    key={v}
-                    onClick={() => setAmount(v)}
-                    className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
-                      amount === v
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-secondary text-secondary-foreground hover:bg-accent"
-                    }`}
-                  >
-                    {fmt(v)}
-                  </button>
-                ))}
-              </div>
+            <p className="mt-3 rounded-xl bg-secondary px-4 py-3 text-sm">
+              Estimated Shares:{" "}
+              <span className="font-bold text-primary">{fmt(estShares)} KHY Tokens</span>
+            </p>
 
-              <div className="mt-4 flex items-center justify-between rounded-2xl bg-cream px-4 py-3 text-sm">
-                <span className="text-muted-foreground">You receive</span>
-                <span className="font-semibold">{fmt(shares)} KHY</span>
-              </div>
-
-              <button
-                onClick={pay}
-                disabled={status === "pending"}
-                className="mt-4 w-full rounded-2xl bg-primary py-3.5 text-sm font-semibold text-primary-foreground transition-transform hover:scale-[1.02] disabled:opacity-70"
-              >
-                {status === "pending" ? "Sending STK push…" : "Pay with M-Pesa"}
-              </button>
-
-              {status !== "idle" && (
-                <div className="rise mt-4 flex items-center gap-3 rounded-2xl border border-border bg-ivory px-4 py-3">
-                  <span
-                    className={`size-2.5 rounded-full ${
-                      status === "pending" ? "dot-pulse bg-gold" : "bg-primary"
-                    }`}
-                  />
-                  <div className="flex-1 text-sm">
-                    <p className="font-semibold">
-                      {status === "pending" ? "Enter your M-Pesa PIN" : "Shares issued"}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {status === "pending"
-                        ? `KES ${fmt(amount)} to Aradhi`
-                        : `${fmt(shares)} KHY sent to your wallet`}
-                    </p>
-                  </div>
-                </div>
+            <button
+              onClick={buy}
+              disabled={!connected || loading}
+              className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3.5 text-sm font-bold text-primary-foreground transition-transform hover:scale-[1.015] disabled:cursor-not-allowed disabled:opacity-55 disabled:hover:scale-100"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="size-4 animate-spin" />
+                  Sending STK Prompt...
+                </>
+              ) : (
+                "Process M-Pesa Purchase"
               )}
-              <p className="mt-3 text-center text-[11px] text-muted-foreground">
-                Demo interface · no live payment is sent
+            </button>
+
+            {!connected && (
+              <p className="rise mt-3 flex items-center gap-2 rounded-xl bg-secondary px-3 py-2.5 text-xs font-medium text-muted-foreground">
+                <TriangleAlert className="size-3.5 shrink-0 text-primary" />
+                Connect your browser wallet to unlock checkout.
+              </p>
+            )}
+          </article>
+
+          {/* Column 3 — holdings */}
+          <article
+            className="rise lift rounded-3xl border border-border bg-card p-6 shadow-[var(--shadow-soft)]"
+            style={{ animationDelay: "220ms" }}
+          >
+            <div className="flex items-center gap-2">
+              <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-accent text-accent-foreground">
+                <Coins className="size-4" />
+              </span>
+              <h2 className="font-display text-lg font-bold tracking-tight">
+                Your Holdings Dashboard
+              </h2>
+            </div>
+
+            <div className="mt-6 rounded-2xl border border-border bg-surface p-5">
+              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+                Asset Fractions Owned
+              </p>
+              <p className="mt-2 font-display text-3xl font-bold tracking-tight">
+                {fmt(shares)} KHY
               </p>
             </div>
 
-            <div className="rounded-3xl border border-border bg-card p-6 shadow-[var(--shadow-soft)]">
-              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-                Recent activity
+            <div className="mt-4 rounded-2xl border border-border bg-surface p-5">
+              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+                Accumulated Rent Due
               </p>
-              <ul className="mt-3 divide-y divide-border">
-                {ledger.map((l) => (
-                  <li key={l.label} className="flex items-center justify-between gap-3 py-3">
-                    <div>
-                      <p className="text-sm font-medium">{l.label}</p>
-                      <p className="text-xs text-muted-foreground">{l.when}</p>
-                    </div>
-                    <span
-                      className={`text-sm font-semibold ${
-                        l.positive ? "text-primary" : "text-foreground"
-                      }`}
-                    >
-                      {l.amount}
-                    </span>
-                  </li>
-                ))}
-              </ul>
+              <p className="mt-2 font-display text-3xl font-bold tracking-tight text-primary">
+                ${rentDue.toFixed(4)} USDC
+              </p>
             </div>
-          </aside>
+
+            <button
+              onClick={withdraw}
+              disabled={rentDue <= 0}
+              className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl border border-border bg-background py-3.5 text-sm font-bold transition-colors hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-background"
+            >
+              {rentDue > 0 ? (
+                <ArrowUpRight className="size-4 text-primary" />
+              ) : (
+                <CheckCircle2 className="size-4 text-muted-foreground" />
+              )}
+              Withdraw Earnings to Wallet
+            </button>
+            <p className="mt-3 text-center text-[11px] text-muted-foreground">
+              Demo interface · no live payment is sent
+            </p>
+          </article>
         </section>
       </main>
 
       <footer className="border-t border-border py-8 text-center text-xs text-muted-foreground">
-        aradhi · micro-rent yield hub · prototype with mock data
+        Kilimani Heights Hub · prototype with mock data
       </footer>
     </div>
   );
