@@ -279,53 +279,56 @@ function Index() {
               send an STK push to complete payment.
             </p>
 
-            <label className="mt-5 block text-xs font-semibold text-muted-foreground">
-              M-Pesa Phone Number
-            </label>
-            <input
-              inputMode="tel"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              placeholder="2547XX XXX XXX"
-              className="mt-1.5 w-full rounded-xl border border-input bg-background px-4 py-3 text-sm outline-none transition-shadow focus:ring-4 focus:ring-[var(--ring)]"
-            />
+            <form onSubmit={buy}>
+              <label className="mt-5 block text-xs font-semibold text-muted-foreground">
+                M-Pesa Phone Number
+              </label>
+              <input
+                inputMode="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="2547XX XXX XXX"
+                className="mt-1.5 w-full rounded-xl border border-input bg-background px-4 py-3 text-sm outline-none transition-shadow focus:ring-4 focus:ring-[var(--ring)]"
+              />
 
-            <label className="mt-4 block text-xs font-semibold text-muted-foreground">
-              Amount to Invest (KES)
-            </label>
-            <input
-              type="number"
-              step={500}
-              min={500}
-              value={amount}
-              onChange={(e) => setAmount(Number(e.target.value) || 0)}
-              className="mt-1.5 w-full rounded-xl border border-input bg-background px-4 py-3 text-sm outline-none transition-shadow focus:ring-4 focus:ring-[var(--ring)]"
-            />
+              <label className="mt-4 block text-xs font-semibold text-muted-foreground">
+                Amount to Invest (KES)
+              </label>
+              <input
+                type="number"
+                step={500}
+                min={500}
+                value={amount}
+                onChange={(e) => setAmount(Number(e.target.value) || 0)}
+                className="mt-1.5 w-full rounded-xl border border-input bg-background px-4 py-3 text-sm outline-none transition-shadow focus:ring-4 focus:ring-[var(--ring)]"
+              />
 
-            <div className="mt-4 rounded-xl bg-secondary px-4 py-3">
-              <p className="text-sm text-muted-foreground">
-                You will receive{" "}
-                <span className="font-bold text-primary">{fmt(estShares)} KHY tokens</span>
-              </p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                1 KHY = KES {fmt(SHARE_PRICE)}
-              </p>
-            </div>
+              <div className="mt-4 rounded-xl bg-secondary px-4 py-3">
+                <p className="text-sm text-muted-foreground">
+                  You will receive{" "}
+                  <span className="font-bold text-primary">{fmt(estShares)} KHY tokens</span>
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  1 KHY = KES {fmt(SHARE_PRICE)}
+                </p>
+              </div>
 
-            <button
-              onClick={buy}
-              disabled={!connected || loading}
-              className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3.5 text-sm font-bold text-primary-foreground transition-transform hover:scale-[1.015] disabled:cursor-not-allowed disabled:opacity-55 disabled:hover:scale-100"
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="size-4 animate-spin" />
-                  Sending STK Prompt...
-                </>
-              ) : (
-                "Process M-Pesa Purchase"
-              )}
-            </button>
+              <button
+                type="submit"
+                disabled={!connected || loading}
+                className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3.5 text-sm font-bold text-primary-foreground transition-transform hover:scale-[1.015] disabled:cursor-not-allowed disabled:opacity-55 disabled:hover:scale-100"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="size-4 animate-spin" />
+                    Sending STK Prompt...
+                  </>
+                ) : (
+                  "Process M-Pesa Purchase"
+                )}
+              </button>
+            </form>
+
 
             {!connected && (
               <p className="rise mt-3 flex items-start gap-2 rounded-xl bg-secondary px-3 py-2.5 text-xs font-medium text-muted-foreground">
