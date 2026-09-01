@@ -37,41 +37,125 @@ export const Route = createFileRoute("/")({
 });
 
 const SHARE_PRICE = 500;
-const MOCK_ADDRESS = "0x9522...Afe5";
+
+// Local bridge backend. When testing the M-Pesa STK push on a real handset,
+// swap this for your ngrok tunnel, e.g. "https://<id>.ngrok-free.app".
+const BACKEND_URL = "http://localhost:5000";
 
 const fmt = (n: number) => n.toLocaleString("en-KE");
 
 function Index() {
-  const [connected, setConnected] = useState(false);
+  const [userAddress, setUserAddress] = useState("");
   const [phone, setPhone] = useState("2547");
   const [amount, setAmount] = useState(2500);
   const [loading, setLoading] = useState(false);
   const [shares, setShares] = useState(0);
   const [rentDue, setRentDue] = useState(0);
 
+  const connected = Boolean(userAddress);
+  const shortAddress = userAddress
+    ? `${userAddress.slice(0, 6)}...${userAddress.slice(-4)}`
+    : "";
   const estShares = useMemo(() => Math.floor((amount || 0) / SHARE_PRICE), [amount]);
 
-  function buy() {
-    if (!connected || loading || estShares < 1) return;
+  async function connectWallet() {
+    try {
+      const injected = (window as unknown as {
+        ethereum?: { request: (a: { method: string }) => Promise<string[]> };
+      }).ethereum;
+      if (!injected) {
+        setUserAddress("0x9522000000000000000000000000000000000Afe5");
+        toast("Demo wallet connected", {
+          description: "No browser wallet detected — using a simulated address.",
+        });
+        return;
+      }
+      const accounts = await injected.request({ method: "eth_requestAccounts" });
+      if (accounts?.[0]) setUserAddress(accounts[0]);
+    } catch (error) {
+      console.error("Wallet connection failed:", error);
+      toast.error("Could not connect your wallet.");
+    }
+  }
+
+  // Web3 direct read: refresh on-chain balances whenever the address changes.
+  useEffect(() => {
+    if (!userAddress) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const { readOnChainBalances } = await import("@/lib/aradhi-chain");
+        const balances = await readOnChainBalances(userAddress);
+        if (!balances || cancelled) return;
+        setShares(balances.shares);
+        setRentDue(balances.pendingRent);
+      } catch (error) {
+        console.error("On-chain balance read failed:", error);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [userAddress]);
+
+  async function buy(e: React.FormEvent) {
+    e.preventDefault();
+    if (loading) return;
+    if (!connected) {
+      toast.error("Please connect your wallet first.");
+      return;
+    }
+    if (estShares < 1) {
+      toast.error(`Minimum investment is KES ${fmt(SHARE_PRICE)}.`);
+      return;
+    }
+
     setLoading(true);
-    toast("STK Push sent to your phone", { description: `KES ${fmt(amount)} · ${phone}` });
-    setTimeout(() => {
-      setLoading(false);
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/invest`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          phoneNumber: phone,
+          amount: Number(amount),
+          walletAddress: userAddress,
+        }),
+      });
+
+      const payload = (await res.json().catch(() => ({}))) as {
+        message?: string;
+        error?: string;
+      };
+
+      if (!res.ok) {
+        console.error("Invest request failed:", res.status, payload);
+        toast.error(payload.error ?? `Payment failed (HTTP ${res.status})`);
+        return;
+      }
+
+      toast.success(payload.message ?? "Aradhi Payment Initiated! Check handset for PIN prompt", {
+        description: `KES ${fmt(amount)} · ${phone}`,
+      });
       setShares((s) => s + estShares);
       setRentDue((r) => r + estShares * 0.0412);
-      toast.success(`${fmt(estShares)} KHY tokens added to your holdings`, {
-        description: "Your fractional ownership is now active.",
+    } catch (error) {
+      console.error("Backend unreachable:", error);
+      toast.error("Cannot reach the Aradhi server on port 5000.", {
+        description: "Make sure the local bridge backend is running, then try again.",
       });
-    }, 2200);
+    } finally {
+      setLoading(false);
+    }
   }
 
   function withdraw() {
     if (rentDue <= 0) return;
-    toast.success(`$${rentDue.toFixed(4)} USDC sent to ${MOCK_ADDRESS}`, {
+    toast.success(`$${rentDue.toFixed(4)} USDC sent to ${shortAddress}`, {
       description: "Your rental earnings are on the way.",
     });
     setRentDue(0);
   }
+
 
   return (
     <div className="min-h-screen">
