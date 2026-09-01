@@ -19,11 +19,13 @@
  */
 
 @theme inline {
-  --font-display: "Fraunces", ui-serif, Georgia, serif;
-  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --color-cream: var(--cream);
   --color-ivory: var(--ivory);
   --color-gold: var(--gold);
+  --color-emerald-soft: var(--emerald-soft);
+  --color-surface: var(--surface);
   --radius-sm: calc(var(--radius) - 4px);
 
   --radius-md: calc(var(--radius) - 2px);
@@ -68,34 +70,36 @@
 }
 
 :root {
-  --radius: 1rem;
-  /* Aradhi palette: ivory canvas, cream surfaces, espresso ink, olive yield */
-  --background: oklch(0.982 0.012 92);
-  --foreground: oklch(0.24 0.02 60);
-  --card: oklch(0.965 0.021 88);
-  --card-foreground: oklch(0.24 0.02 60);
-  --popover: oklch(0.982 0.012 92);
-  --popover-foreground: oklch(0.24 0.02 60);
-  --primary: oklch(0.42 0.075 145);
-  --primary-foreground: oklch(0.985 0.012 92);
-  --secondary: oklch(0.945 0.031 85);
-  --secondary-foreground: oklch(0.3 0.03 60);
-  --muted: oklch(0.945 0.024 88);
-  --muted-foreground: oklch(0.52 0.028 70);
-  --accent: oklch(0.9 0.06 82);
-  --accent-foreground: oklch(0.3 0.04 60);
+  --radius: 0.9rem;
+  /* Kilimani Heights: white canvas, cool gray, emerald accents */
+  --background: oklch(0.985 0.002 250);
+  --foreground: oklch(0.21 0.015 250);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.21 0.015 250);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.21 0.015 250);
+  --primary: oklch(0.55 0.13 162);
+  --primary-foreground: oklch(0.99 0 0);
+  --secondary: oklch(0.965 0.004 250);
+  --secondary-foreground: oklch(0.3 0.015 250);
+  --muted: oklch(0.965 0.004 250);
+  --muted-foreground: oklch(0.55 0.015 250);
+  --accent: oklch(0.955 0.03 162);
+  --accent-foreground: oklch(0.36 0.09 162);
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: oklch(0.984 0.003 247.858);
-  --border: oklch(0.24 0.02 60 / 10%);
-  --input: oklch(0.24 0.02 60 / 12%);
-  --ring: oklch(0.42 0.075 145 / 45%);
-  --cream: oklch(0.955 0.03 86);
-  --ivory: oklch(0.987 0.01 92);
-  --gold: oklch(0.78 0.115 78);
+  --border: oklch(0.21 0.015 250 / 10%);
+  --input: oklch(0.21 0.015 250 / 12%);
+  --ring: oklch(0.55 0.13 162 / 35%);
+  --cream: oklch(0.972 0.004 250);
+  --ivory: oklch(1 0 0);
+  --gold: oklch(0.8 0.11 85);
+  --emerald-soft: oklch(0.955 0.035 162);
+  --surface: oklch(0.978 0.003 250);
   --gradient-ivory: linear-gradient(160deg, var(--ivory), var(--cream));
-  --gradient-gold: linear-gradient(120deg, var(--gold), oklch(0.88 0.07 92));
-  --shadow-soft: 0 1px 2px oklch(0.3 0.03 60 / 6%), 0 18px 40px -24px oklch(0.3 0.03 60 / 22%);
-  --shadow-lift: 0 2px 4px oklch(0.3 0.03 60 / 8%), 0 30px 60px -28px oklch(0.3 0.03 60 / 30%);
+  --gradient-gold: linear-gradient(120deg, oklch(0.62 0.13 162), oklch(0.5 0.11 168));
+  --shadow-soft: 0 1px 2px oklch(0.21 0.015 250 / 5%), 0 12px 32px -20px oklch(0.21 0.015 250 / 22%);
+  --shadow-lift: 0 2px 6px oklch(0.21 0.015 250 / 7%), 0 26px 56px -28px oklch(0.21 0.015 250 / 28%);
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
@@ -161,9 +165,9 @@
 @layer base {
   body {
     background-image: radial-gradient(
-        1200px 600px at 85% -10%,
-        color-mix(in oklab, var(--gold) 22%, transparent),
-        transparent 60%
+        1100px 520px at 80% -12%,
+        color-mix(in oklab, var(--primary) 8%, transparent),
+        transparent 62%
       ),
       radial-gradient(900px 500px at -10% 110%, var(--cream), transparent 55%);
     background-attachment: fixed;
