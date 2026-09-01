@@ -153,7 +153,7 @@ function Index() {
               </div>
               <div className="mt-2 h-2.5 overflow-hidden rounded-full bg-secondary">
                 <div
-                  className="bar-fill h-full rounded-full bg-[var(--gradient-gold)]"
+                  className="bar-fill h-full rounded-full bg-primary"
                   style={{ width: "84%", animationDelay: "320ms" }}
                 />
               </div>
